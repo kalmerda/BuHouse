@@ -362,6 +362,11 @@ body > * {
   transition: border-color 0.2s;
 }
 
+.search-field select:invalid,
+.search-field select.placeholder-active {
+  color: var(--text-muted);
+}
+
 .search-field select:focus,
 .search-field input:focus,
 .search-input:focus,

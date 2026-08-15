@@ -898,7 +898,8 @@ function init() {
   document.getElementById('search-form').addEventListener('submit', (e) => {
     e.preventDefault();
     state.district = document.getElementById('filter-district').value.trim();
-    state.budget = document.getElementById('filter-budget').value;
+    const budgetValue = document.getElementById('filter-budget').value;
+    state.budget = budgetValue || '20000+';
     renderListings();
     document.querySelector('.listings-section').scrollIntoView({ behavior: 'smooth' });
   });

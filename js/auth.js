@@ -1,8 +1,21 @@
 let currentUser = null;
 let authClient = null;
 
+const CONFIG_ERROR = 'Site yapılandırması eksik. Supabase anahtarları tanımlanmamış — yönetici Vercel environment variables kontrol etmeli.';
+
+function ensureAuthClient() {
+  if (authClient) return authClient;
+  try {
+    authClient = window.getSupabase();
+    return authClient;
+  } catch {
+    throw new Error(CONFIG_ERROR);
+  }
+}
+
 async function fetchProfile(userId) {
-  const { data, error } = await authClient
+  const client = ensureAuthClient();
+  const { data, error } = await client
     .from('profiles')
     .select('name, university_id')
     .eq('id', userId)
@@ -118,7 +131,8 @@ async function handleRegister(e) {
   }
 
   try {
-    const { data, error } = await authClient.auth.signUp({
+    const client = ensureAuthClient();
+    const { data, error } = await client.auth.signUp({
       email,
       password,
       options: {
@@ -162,7 +176,8 @@ async function handleLogin(e) {
   }
 
   try {
-    const { data, error } = await authClient.auth.signInWithPassword({ email, password });
+    const client = ensureAuthClient();
+    const { data, error } = await client.auth.signInWithPassword({ email, password });
     if (error) throw error;
 
     await setSessionUser(data.session);
@@ -192,7 +207,8 @@ async function handleForgotPassword(e) {
   }
 
   try {
-    const { error } = await authClient.auth.resetPasswordForEmail(email, {
+    const client = ensureAuthClient();
+    const { error } = await client.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/`,
     });
     if (error) throw error;
@@ -218,7 +234,8 @@ async function handleResetPassword(e) {
   }
 
   try {
-    const { error } = await authClient.auth.updateUser({ password });
+    const client = ensureAuthClient();
+    const { error } = await client.auth.updateUser({ password });
     if (error) throw error;
 
     showToast('Şifren güncellendi.');
@@ -230,7 +247,7 @@ async function handleResetPassword(e) {
 }
 
 async function handleLogout() {
-  await authClient.auth.signOut();
+  await ensureAuthClient().auth.signOut();
   currentUser = null;
   updateAuthUI();
   window.setListingsView?.('all');
@@ -241,7 +258,8 @@ async function handleRecoveryRedirect() {
   const hash = window.location.hash;
   if (!hash.includes('type=recovery')) return;
 
-  const { data: { session }, error } = await authClient.auth.getSession();
+  const client = ensureAuthClient();
+  const { data: { session }, error } = await client.auth.getSession();
   if (error || !session) return;
 
   openAuthModal('reset-password');
@@ -249,12 +267,12 @@ async function handleRecoveryRedirect() {
 }
 
 async function initAuth() {
-  authClient = window.getSupabase();
+  const client = ensureAuthClient();
 
-  const { data: { session } } = await authClient.auth.getSession();
+  const { data: { session } } = await client.auth.getSession();
   await setSessionUser(session);
 
-  authClient.auth.onAuthStateChange(async (_event, nextSession) => {
+  client.auth.onAuthStateChange(async (_event, nextSession) => {
     await setSessionUser(nextSession);
     if (_event === 'PASSWORD_RECOVERY') {
       openAuthModal('reset-password');
