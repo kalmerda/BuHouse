@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BuHouse — Boğaziçi Üniversitesi Öğrencileri İçin</title>
+  <meta name="description" content="Boğaziçi Üniversitesi öğrencileri için oda, ev ve eşya ilanları platformu. Kampüs çevresinde filtrele.">
+  <meta name="theme-color" content="#2d6a4f">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="BuHouse — Boğaziçi Üniversitesi Öğrencileri İçin">
+  <meta property="og:description" content="Boğaziçi öğrencileri için oda, ev ve eşya ilanları. Hisarüstü ve kampüs çevresinde filtrele.">
+  <meta property="og:locale" content="tr_TR">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="BuHouse">
+  <meta name="twitter:description" content="Boğaziçi öğrencileri için oda, ev ve eşya ilanları platformu.">
+  <link rel="icon" href="assets/bogazici-mark.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=7">
+</head>
+<body>
+  <header class="header">
+    <nav class="nav container">
+      <a href="./" class="logo">
+        <span class="logo-icon"><img src="assets/bogazici-mark.svg" alt="" width="36" height="36"></span>
+        <span class="logo-copy">
+          <span class="logo-text">BuHouse</span>
+          <span class="logo-tagline">Boğaziçi öğrencileri için</span>
+        </span>
+      </a>
+      <div class="nav-actions" id="nav-guest">
+        <button class="btn btn-ghost" id="btn-how-it-works">Nasıl Çalışır?</button>
+        <button class="btn btn-ghost" id="btn-open-login">Giriş Yap</button>
+        <button class="btn btn-primary" id="btn-open-register">Kayıt Ol</button>
+      </div>
+      <div class="nav-actions hidden" id="nav-user">
+        <div class="user-menu">
+          <div class="user-info">
+            <span class="user-name" id="nav-user-name"></span>
+            <span class="user-email" id="nav-user-email"></span>
+          </div>
+          <button class="btn btn-ghost" id="btn-my-listings">İlanlarım</button>
+          <button class="btn btn-primary" id="btn-new-listing">İlan Ver</button>
+          <button class="btn btn-ghost" id="btn-logout">Çıkış</button>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-bg" aria-hidden="true"></div>
+      <div class="container hero-grid">
+        <div class="hero-content">
+          <p class="hero-badge">Boğaziçi Üniversitesi</p>
+          <div class="hero-community">
+            <span class="community-pill">Hisarüstü & kampüs çevresi</span>
+            <span class="community-pill">Oda arkadaşı</span>
+            <span class="community-pill">Eşya ilanı</span>
+          </div>
+          <h1 class="hero-title">
+            Boğaziçi'liler için <em>oda & ev</em> platformu
+          </h1>
+          <p class="hero-subtitle">
+            Bebek, Beşiktaş, Etiler… Kampüs çevresinde yaşayan öğrencilerin ilanları burada.
+          </p>
+
+          <form class="search-bar" id="search-form">
+            <div class="search-field search-field-district">
+              <label for="filter-district">Semt / İlçe</label>
+              <input type="text" id="filter-district" placeholder="Beşiktaş, Bebek, Kadıköy...">
+            </div>
+            <div class="search-field">
+              <label for="filter-budget">Max. bütçe</label>
+              <select id="filter-budget">
+                <option value="8000">8.000 ₺</option>
+                <option value="12000">12.000 ₺</option>
+                <option value="15000">15.000 ₺</option>
+                <option value="20000">20.000 ₺</option>
+                <option value="20000+" selected>20.000+ ₺</option>
+              </select>
+            </div>
+            <div class="search-field search-field-submit">
+              <button type="submit" class="btn btn-primary btn-search">Ara</button>
+            </div>
+          </form>
+
+          <div class="hero-stats">
+            <div class="stat">
+              <strong id="stat-listings">0</strong>
+              <span>aktif ilan</span>
+            </div>
+            <div class="stat">
+              <strong id="stat-districts">0</strong>
+              <span>semt</span>
+            </div>
+            <div class="stat">
+              <strong>1</strong>
+              <span>üniversite</span>
+            </div>
+          </div>
+        </div>
+
+        <figure class="hero-scenery">
+          <div class="hero-photo-wrap">
+            <img
+              src="assets/photos/guney-kampus-boun.jpg"
+              alt="Boğaziçi Üniversitesi Güney Kampüs"
+              width="360"
+              height="480"
+              class="hero-portrait"
+              loading="eager">
+          </div>
+          <figcaption class="hero-scenery-caption">Boğaziçi Üniversitesi Güney Kampüs</figcaption>
+        </figure>
+      </div>
+
+      <div class="hero-panorama" aria-hidden="true">
+        <img
+          src="assets/photos/guney-kampus-boun.jpg"
+          alt="Boğaziçi Üniversitesi Güney Kampüs"
+          width="1280"
+          height="720"
+          loading="lazy">
+      </div>
+    </section>
+
+    <section class="filters-section container">
+      <div class="filters-row">
+        <div class="filter-chips" id="view-chips">
+          <button class="chip active" data-view="all">Keşfet</button>
+          <button class="chip" data-view="mine">İlanlarım</button>
+        </div>
+        <div class="filter-chips" id="type-chips">
+          <button class="chip active" data-type="">Tümü</button>
+          <button class="chip" data-type="seeking">Oda arıyor</button>
+          <button class="chip" data-type="offering">Oda sunuyor</button>
+          <button class="chip" data-type="items">Eşya ilanı</button>
+        </div>
+        <input type="search" class="search-input" id="filter-keyword" placeholder="Başlık, semt, açıklama ara...">
+      </div>
+    </section>
+
+    <section class="listings-section container">
+      <div class="section-header">
+        <h2 id="listings-title">Keşfet</h2>
+        <p id="results-count">0 ilan bulundu</p>
+      </div>
+      <div class="listings-grid" id="listings-grid"></div>
+      <div class="empty-state hidden" id="empty-state">
+        <div class="empty-icon">🔍</div>
+        <h3 id="empty-title">İlan bulunamadı</h3>
+        <p id="empty-text">Filtreleri değiştirin veya ilk ilanı siz verin.</p>
+        <button class="btn btn-primary" id="btn-empty-create">İlan Ver</button>
+      </div>
+    </section>
+
+    <section class="how-it-works container" id="how-it-works">
+      <div class="how-it-works-bg" aria-hidden="true"></div>
+      <h2>Nasıl Çalışır?</h2>
+      <div class="steps">
+        <article class="step">
+          <span class="step-num">1</span>
+          <h3>Profil oluştur</h3>
+          <p>Boğaziçi mailinle katıl, kampüs çevresinde ilan ver.</p>
+        </article>
+        <article class="step">
+          <span class="step-num">2</span>
+          <h3>İlanları keşfet</h3>
+          <p>Semt, bütçe ve tercihlerine göre filtrele.</p>
+        </article>
+        <article class="step">
+          <span class="step-num">3</span>
+          <h3>İletişime geç</h3>
+          <p>Uygun adaylarla WhatsApp üzerinden doğrudan mesajlaş.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-scenery" aria-hidden="true">
+      <img
+        src="assets/photos/guney-kampus-boun.jpg"
+        alt="Boğaziçi Üniversitesi Güney Kampüs"
+        loading="lazy">
+    </div>
+    <div class="container footer-content">
+      <div class="footer-brand">
+        <span class="logo-icon"><img src="assets/bogazici-mark.svg" alt="" width="32" height="32"></span>
+        <span>BuHouse</span>
+      </div>
+      <p class="footer-tagline">Boğaziçi öğrencilerinin kampüs çevresi platformu — oda, ev ve eşya ilanları.</p>
+      <p class="footer-note">© 2026 BuHouse · Görsel: Boğaziçi Üniversitesi Haberler</p>
+    </div>
+  </footer>
+
+  <!-- İlan Ver Modal -->
+  <dialog class="modal" id="listing-modal">
+    <form class="modal-form" id="listing-form">
+      <div class="modal-header">
+        <h2 id="listing-modal-title">Yeni İlan Oluştur</h2>
+        <button type="button" class="modal-close" id="modal-close" aria-label="Kapat">&times;</button>
+      </div>
+
+      <div id="listing-type-step">
+        <p class="auth-intro">Önce ilan türünü seç:</p>
+        <div class="type-choice" id="type-choice">
+          <button type="button" class="type-choice-btn" data-type="seeking">
+            <span class="type-choice-icon">🔍</span>
+            <span class="type-choice-label">Oda arıyorum</span>
+          </button>
+          <button type="button" class="type-choice-btn" data-type="offering">
+            <span class="type-choice-icon">🏠</span>
+            <span class="type-choice-label">Oda sunuyorum</span>
+          </button>
+          <button type="button" class="type-choice-btn" data-type="items">
+            <span class="type-choice-icon">📦</span>
+            <span class="type-choice-label">Eşya ilanı</span>
+          </button>
+        </div>
+        <input type="hidden" id="form-type" value="">
+      </div>
+
+      <div id="listing-details" class="hidden">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="form-name">Ad Soyad <span class="optional">(opsiyonel)</span></label>
+          <input type="text" id="form-name">
+          <small class="field-hint">Doldursan bile ilanda sadece baş harflerin gösterilir</small>
+        </div>
+        <div class="form-group" id="class-year-group">
+          <label for="form-class-year">Kaçıncı sınıf <span class="optional">(opsiyonel)</span></label>
+          <input type="text" id="form-class-year" placeholder="Örn. 2. sınıf, mezun">
+        </div>
+        <div class="form-group full-width hidden" id="photos-section">
+          <label for="form-photos" id="form-photos-label">Oda fotoğrafları *</label>
+          <input type="file" id="form-photos" accept="image/jpeg,image/png,image/webp" multiple>
+          <small class="field-hint" id="form-photos-hint">Oda sunuyorsan en az 1 fotoğraf yükle (max 5, JPG/PNG/WEBP — 5 MB)</small>
+          <div class="photo-preview" id="photo-preview"></div>
+        </div>
+        <input type="hidden" id="form-university" value="Boğaziçi Üniversitesi">
+        <div class="form-group">
+          <label for="form-district">Semt / İlçe *</label>
+          <input type="text" id="form-district" required placeholder="Beşiktaş">
+        </div>
+        <div class="form-group">
+          <label for="form-budget" id="form-budget-label">Aylık bütçe (₺) *</label>
+          <input type="number" id="form-budget" required min="1000" step="500" placeholder="8000">
+        </div>
+        <div class="form-group full-width">
+          <label for="form-title">İlan başlığı *</label>
+          <input type="text" id="form-title" required placeholder="Beşiktaş'ta sakin ev arkadaşı arıyorum">
+        </div>
+        <div class="form-group full-width">
+          <label for="form-description">Açıklama *</label>
+          <textarea id="form-description" required rows="4" placeholder="Yaşam tarzın, ev kuralların ve beklentilerin hakkında bilgi ver. Cinsiyet tercihlerini de bu alanda belirtebilirsin."></textarea>
+        </div>
+        <div class="form-group full-width">
+          <label for="form-whatsapp">Telefon numarası *</label>
+          <input
+            type="tel"
+            id="form-whatsapp"
+            name="whatsapp"
+            required
+            autocomplete="tel"
+            inputmode="tel"
+            maxlength="17"
+            placeholder="0532 123 45 67"
+            title="10 haneli cep telefonu numarası (5 ile başlamalı)">
+          <small class="field-hint">Zorunlu · Sadece rakam · 10 hane (ör. 0532 123 45 67)</small>
+        </div>
+        <div class="form-group" id="move-in-group">
+          <label for="form-move-in">Taşınma tarihi</label>
+          <input type="date" id="form-move-in">
+        </div>
+      </div>
+
+      <fieldset class="preferences" id="room-preferences">
+        <legend>Tercihler</legend>
+        <label class="checkbox-label">
+          <input type="checkbox" id="form-smoking" value="no-smoking">
+          Sigara içilmez
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="form-pets" value="pets-ok">
+          Evcil hayvan uygun
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="form-quiet" value="quiet">
+          Sessiz ortam tercih ederim
+        </label>
+      </fieldset>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="modal-cancel">İptal</button>
+        <button type="submit" class="btn btn-primary" id="listing-submit-btn">İlanı Yayınla</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Detay Modal -->
+  <dialog class="modal" id="detail-modal">
+    <div class="detail-content" id="detail-content"></div>
+    <button type="button" class="modal-close detail-close" id="detail-close" aria-label="Kapat">&times;</button>
+  </dialog>
+
+  <div class="toast hidden" id="toast"></div>
+
+  <!-- Kayıt / Giriş Modal -->
+  <dialog class="modal" id="auth-modal">
+    <div class="modal-form auth-modal">
+      <div class="modal-header">
+        <h2>Hesabın</h2>
+        <button type="button" class="modal-close" id="auth-modal-close" aria-label="Kapat">&times;</button>
+      </div>
+
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" data-tab="register">Kayıt Ol</button>
+        <button type="button" class="auth-tab" data-tab="login">Giriş Yap</button>
+      </div>
+
+      <div id="register-panel">
+        <p class="auth-intro">Boğaziçi Üniversitesi öğrencileri için. Kampüs mailinle kayıt ol.</p>
+        <form id="register-form">
+          <input type="hidden" id="register-university" value="bogazici">
+          <div class="form-group">
+            <label for="register-name">Ad Soyad</label>
+            <input type="text" id="register-name" required placeholder="Ayşe Yılmaz">
+          </div>
+          <div class="form-group">
+            <label for="register-email">Boğaziçi e-postası</label>
+            <input type="email" id="register-email" required placeholder="ad.soyad@std.bogazici.edu.tr">
+            <small class="field-hint" id="email-hint">Örnek: ad.soyad@std.bogazici.edu.tr</small>
+          </div>
+          <div class="form-group">
+            <label for="register-password">Şifre</label>
+            <input type="password" id="register-password" required minlength="6" placeholder="En az 6 karakter">
+          </div>
+          <p class="form-error" id="register-error"></p>
+          <button type="submit" class="btn btn-primary btn-full">Kayıt Ol</button>
+        </form>
+      </div>
+
+      <div id="confirm-panel" class="hidden">
+        <p class="auth-intro">
+          <strong id="confirm-email"></strong> adresine doğrulama linki gönderdik.
+          E-postandaki linke tıklayıp hesabını doğrula, ardından giriş yap.
+        </p>
+        <button type="button" class="btn btn-primary btn-full" id="btn-back-to-login-from-confirm">Giriş Yap</button>
+      </div>
+
+      <div id="login-panel" class="hidden">
+        <form id="login-form">
+          <div class="form-group">
+            <label for="login-email">Boğaziçi e-postası</label>
+            <input type="email" id="login-email" required placeholder="ad.soyad@std.bogazici.edu.tr">
+          </div>
+          <div class="form-group">
+            <label for="login-password">Şifre</label>
+            <input type="password" id="login-password" required>
+          </div>
+          <p class="form-error" id="login-error"></p>
+          <button type="submit" class="btn btn-primary btn-full">Giriş Yap</button>
+          <button type="button" class="link-btn btn-full" id="btn-forgot-password">Şifremi unuttum</button>
+        </form>
+      </div>
+
+      <div id="forgot-panel" class="hidden">
+        <p class="auth-intro">
+          Kayıtlı Boğaziçi e-posta adresine şifre sıfırlama linki gönderilir.
+        </p>
+        <form id="forgot-form">
+          <div class="form-group">
+            <label for="forgot-email">Boğaziçi e-postası</label>
+            <input type="email" id="forgot-email" required placeholder="ad.soyad@std.bogazici.edu.tr">
+          </div>
+          <p class="form-error" id="forgot-error"></p>
+          <button type="submit" class="btn btn-primary btn-full">Sıfırlama Linki Gönder</button>
+          <button type="button" class="btn btn-ghost btn-full" id="btn-back-to-login">Girişe dön</button>
+        </form>
+      </div>
+
+      <div id="reset-password-panel" class="hidden">
+        <p class="auth-intro">Yeni şifreni belirle.</p>
+        <form id="reset-password-form">
+          <div class="form-group">
+            <label for="reset-password-new">Yeni şifre</label>
+            <input type="password" id="reset-password-new" required minlength="6" placeholder="En az 6 karakter">
+          </div>
+          <div class="form-group">
+            <label for="reset-password-confirm">Yeni şifre (tekrar)</label>
+            <input type="password" id="reset-password-confirm" required minlength="6">
+          </div>
+          <p class="form-error" id="reset-password-error"></p>
+          <button type="submit" class="btn btn-primary btn-full">Şifreyi Güncelle</button>
+        </form>
+      </div>
+
+      <button type="button" class="btn btn-ghost btn-full auth-cancel" id="auth-modal-cancel">Kapat</button>
+    </div>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js?v=1"></script>
+  <script src="js/supabase-client.js?v=1"></script>
+  <script src="js/auth.js?v=2"></script>
+  <script src="js/app.js?v=10"></script>
+</body>
+</html>

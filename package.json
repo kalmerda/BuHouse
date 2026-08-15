@@ -1,0 +1,8 @@
+{
+  "name": "buhouse",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build-config.js",
+    "dev:config": "node scripts/build-config.js"
+  }
+}

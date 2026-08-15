@@ -1,0 +1,8 @@
+.env
+server/.env
+server/oda_arkadasi.db
+server/uploads/
+js/config.js
+__pycache__/
+*.pyc
+.DS_Store

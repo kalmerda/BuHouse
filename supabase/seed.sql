@@ -1,0 +1,12 @@
+-- Opsiyonel: örnek ilanlar (test kullanıcısı oluşturduktan sonra user_id'yi değiştir)
+-- insert into public.listings (user_id, name, type, district, budget, title, description, whatsapp)
+-- values (
+--   'YOUR-USER-UUID',
+--   'A. Y.',
+--   'seeking',
+--   'Beşiktaş',
+--   9000,
+--   'Beşiktaş''ta ev arkadaşı arıyorum',
+--   'Örnek ilan açıklaması.',
+--   '05000000000'
+-- );
