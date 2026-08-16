@@ -1,5 +1,7 @@
 let currentUser = null;
 let authClient = null;
+let isRecoveringPassword = false;
+let capturedAuthRedirect = null;
 
 const CONFIG_ERROR = 'Site yapılandırması eksik. Supabase anahtarları tanımlanmamış — yönetici Vercel environment variables kontrol etmeli.';
 
@@ -10,6 +12,54 @@ function ensureAuthClient() {
     return authClient;
   } catch {
     throw new Error(CONFIG_ERROR);
+  }
+}
+
+function getSiteRedirectTo() {
+  return `${window.location.origin}${window.location.pathname || '/'}`;
+}
+
+function captureAuthRedirect() {
+  if (capturedAuthRedirect) return capturedAuthRedirect;
+
+  const params = new URLSearchParams();
+  const search = window.location.search.replace(/^\?/, '');
+  const hash = window.location.hash.replace(/^#/, '');
+  new URLSearchParams(search).forEach((value, key) => params.set(key, value));
+  new URLSearchParams(hash).forEach((value, key) => params.set(key, value));
+
+  capturedAuthRedirect = {
+    type: params.get('type'),
+    error: params.get('error'),
+    errorCode: params.get('error_code'),
+    errorDescription: params.get('error_description'),
+  };
+  return capturedAuthRedirect;
+}
+
+function friendlyAuthRedirectError(redirect) {
+  const raw = redirect?.errorDescription || redirect?.errorCode || redirect?.error || '';
+  let decoded = raw;
+  try {
+    decoded = decodeURIComponent(String(raw).replace(/\+/g, ' '));
+  } catch {
+    decoded = String(raw);
+  }
+
+  if (/expired|invalid|otp/i.test(decoded) || redirect?.errorCode === 'otp_expired') {
+    return 'Şifre sıfırlama linkinin süresi dolmuş veya geçersiz. Yeni bir link iste.';
+  }
+  return decoded || 'Şifre sıfırlama linki kullanılamadı. Yeni bir link iste.';
+}
+
+function setButtonBusy(button, busy, idleLabel) {
+  if (!button) return;
+  button.disabled = busy;
+  if (busy) {
+    button.dataset.idleLabel = button.dataset.idleLabel || button.textContent;
+    button.textContent = 'Gönderiliyor...';
+  } else {
+    button.textContent = button.dataset.idleLabel || idleLabel || button.textContent;
   }
 }
 
@@ -81,13 +131,19 @@ function requireAuth(action) {
 }
 
 function openAuthModal(mode = 'register') {
-  document.getElementById('auth-modal').showModal();
+  const modal = document.getElementById('auth-modal');
+  if (modal && !modal.open) modal.showModal();
   switchAuthTab(mode);
 }
 
 function closeAuthModal() {
-  document.getElementById('auth-modal').close();
+  const abandonedRecovery = isRecoveringPassword;
+  isRecoveringPassword = false;
+  document.getElementById('auth-modal')?.close();
   resetAuthForms();
+  if (abandonedRecovery) {
+    showToast('Şifren henüz güncellenmedi. İstersen Şifremi unuttum ile yeni link isteyebilirsin.');
+  }
 }
 
 function switchAuthTab(mode) {
@@ -95,12 +151,18 @@ function switchAuthTab(mode) {
     tab.classList.toggle('active', tab.dataset.tab === mode);
   });
 
-  ['register', 'confirm', 'login', 'forgot', 'reset-password'].forEach((panel) => {
+  ['register', 'confirm', 'login', 'forgot', 'forgot-sent', 'reset-password'].forEach((panel) => {
     document.getElementById(`${panel}-panel`)?.classList.toggle('hidden', mode !== panel);
   });
 
-  const hideTabs = ['forgot', 'reset-password', 'confirm'].includes(mode);
+  const hideTabs = ['forgot', 'forgot-sent', 'reset-password', 'confirm'].includes(mode);
   document.querySelector('.auth-tabs')?.classList.toggle('hidden', hideTabs);
+
+  if (mode === 'reset-password') {
+    requestAnimationFrame(() => {
+      document.getElementById('reset-password-new')?.focus();
+    });
+  }
 }
 
 function resetAuthForms() {
@@ -113,6 +175,18 @@ function resetAuthForms() {
   document.getElementById('forgot-error').textContent = '';
   document.getElementById('reset-password-error').textContent = '';
   switchAuthTab('register');
+}
+
+function enterPasswordRecovery() {
+  isRecoveringPassword = true;
+  openAuthModal('reset-password');
+}
+
+function showForgotLinkError(message) {
+  openAuthModal('forgot');
+  const errorEl = document.getElementById('forgot-error');
+  if (errorEl) errorEl.textContent = message;
+  showToast(message);
 }
 
 async function handleRegister(e) {
@@ -140,7 +214,7 @@ async function handleRegister(e) {
           name,
           university_id: 'bogazici',
         },
-        emailRedirectTo: `${window.location.origin}/`,
+        emailRedirectTo: getSiteRedirectTo(),
       },
     });
 
@@ -197,6 +271,7 @@ async function handleLogin(e) {
 async function handleForgotPassword(e) {
   e.preventDefault();
   const errorEl = document.getElementById('forgot-error');
+  const submitBtn = document.getElementById('btn-forgot-submit');
   errorEl.textContent = '';
 
   const email = document.getElementById('forgot-email').value.trim().toLowerCase();
@@ -206,23 +281,28 @@ async function handleForgotPassword(e) {
     return;
   }
 
+  setButtonBusy(submitBtn, true, 'Sıfırlama Linki Gönder');
   try {
     const client = ensureAuthClient();
     const { error } = await client.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/`,
+      redirectTo: getSiteRedirectTo(),
     });
     if (error) throw error;
 
+    document.getElementById('forgot-sent-email').textContent = email;
+    switchAuthTab('forgot-sent');
     showToast('Şifre sıfırlama linki e-postana gönderildi.');
-    switchAuthTab('login');
   } catch (err) {
     errorEl.textContent = err.message || 'İşlem başarısız.';
+  } finally {
+    setButtonBusy(submitBtn, false, 'Sıfırlama Linki Gönder');
   }
 }
 
 async function handleResetPassword(e) {
   e.preventDefault();
   const errorEl = document.getElementById('reset-password-error');
+  const submitBtn = document.getElementById('btn-reset-submit');
   errorEl.textContent = '';
 
   const password = document.getElementById('reset-password-new').value;
@@ -233,53 +313,61 @@ async function handleResetPassword(e) {
     return;
   }
 
+  setButtonBusy(submitBtn, true, 'Şifreyi Güncelle');
   try {
     const client = ensureAuthClient();
     const { error } = await client.auth.updateUser({ password });
     if (error) throw error;
 
+    isRecoveringPassword = false;
     showToast('Şifren güncellendi.');
-    switchAuthTab('login');
-    history.replaceState(null, '', window.location.pathname);
+    closeAuthModal();
   } catch (err) {
-    errorEl.textContent = err.message || 'Şifre güncellenemedi.';
+    const message = err.message || 'Şifre güncellenemedi.';
+    if (/session|expired|not authenticated/i.test(message)) {
+      errorEl.textContent = 'Oturumun süresi doldu. Şifremi unuttum adımından yeni bir link iste.';
+      return;
+    }
+    errorEl.textContent = message;
+  } finally {
+    setButtonBusy(submitBtn, false, 'Şifreyi Güncelle');
   }
 }
 
 async function handleLogout() {
   await ensureAuthClient().auth.signOut();
   currentUser = null;
+  isRecoveringPassword = false;
   updateAuthUI();
   window.setListingsView?.('all');
   showToast('Çıkış yapıldı.');
 }
 
-async function handleRecoveryRedirect() {
-  const hash = window.location.hash;
-  if (!hash.includes('type=recovery')) return;
-
-  const client = ensureAuthClient();
-  const { data: { session }, error } = await client.auth.getSession();
-  if (error || !session) return;
-
-  openAuthModal('reset-password');
-  history.replaceState(null, '', window.location.pathname);
-}
-
 async function initAuth() {
+  const redirect = captureAuthRedirect();
   const client = ensureAuthClient();
+
+  // URL'deki recovery oturumu initialize sırasında işlenir; dinleyiciyi
+  // getSession'dan önce bağla ki PASSWORD_RECOVERY kaçmasın.
+  client.auth.onAuthStateChange(async (event, nextSession) => {
+    await setSessionUser(nextSession);
+    if (event === 'PASSWORD_RECOVERY') {
+      enterPasswordRecovery();
+    }
+  });
 
   const { data: { session } } = await client.auth.getSession();
   await setSessionUser(session);
 
-  client.auth.onAuthStateChange(async (_event, nextSession) => {
-    await setSessionUser(nextSession);
-    if (_event === 'PASSWORD_RECOVERY') {
-      openAuthModal('reset-password');
+  if (redirect.type === 'recovery') {
+    if (session) {
+      enterPasswordRecovery();
+    } else {
+      showForgotLinkError(friendlyAuthRedirectError(redirect));
     }
-  });
-
-  await handleRecoveryRedirect();
+  } else if (redirect.error || redirect.errorCode || redirect.errorDescription) {
+    showForgotLinkError(friendlyAuthRedirectError(redirect));
+  }
 }
 
 function bindAuthEvents() {
@@ -296,6 +384,7 @@ function bindAuthEvents() {
   });
   document.getElementById('btn-back-to-login')?.addEventListener('click', () => switchAuthTab('login'));
   document.getElementById('btn-back-to-login-from-confirm')?.addEventListener('click', () => switchAuthTab('login'));
+  document.getElementById('btn-back-to-login-from-forgot-sent')?.addEventListener('click', () => switchAuthTab('login'));
   document.getElementById('btn-open-register')?.addEventListener('click', () => openAuthModal('register'));
   document.getElementById('btn-open-login')?.addEventListener('click', () => openAuthModal('login'));
   document.getElementById('btn-logout')?.addEventListener('click', handleLogout);
@@ -307,7 +396,11 @@ function bindAuthEvents() {
   });
 
   document.getElementById('auth-modal')?.addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) closeAuthModal();
+    if (e.target === e.currentTarget && !isRecoveringPassword) closeAuthModal();
+  });
+
+  document.getElementById('auth-modal')?.addEventListener('cancel', (e) => {
+    if (isRecoveringPassword) e.preventDefault();
   });
 }
 

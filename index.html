@@ -372,31 +372,40 @@
       <div id="forgot-panel" class="hidden">
         <p class="auth-intro">
           Kayıtlı Boğaziçi e-posta adresine şifre sıfırlama linki gönderilir.
+          Link birkaç dakika içinde gelmezse spam / junk klasörünü kontrol et.
         </p>
         <form id="forgot-form">
           <div class="form-group">
             <label for="forgot-email">Boğaziçi e-postası</label>
-            <input type="email" id="forgot-email" required placeholder="ad.soyad@std.bogazici.edu.tr">
+            <input type="email" id="forgot-email" required autocomplete="email" placeholder="ad.soyad@std.bogazici.edu.tr">
           </div>
           <p class="form-error" id="forgot-error"></p>
-          <button type="submit" class="btn btn-primary btn-full">Sıfırlama Linki Gönder</button>
+          <button type="submit" class="btn btn-primary btn-full" id="btn-forgot-submit">Sıfırlama Linki Gönder</button>
           <button type="button" class="btn btn-ghost btn-full" id="btn-back-to-login">Girişe dön</button>
         </form>
       </div>
 
+      <div id="forgot-sent-panel" class="hidden">
+        <p class="auth-intro">
+          <strong id="forgot-sent-email"></strong> adresine şifre sıfırlama linki gönderildi.
+          E-postadaki linke tıklayınca yeni şifreni belirleyebilirsin.
+        </p>
+        <button type="button" class="btn btn-primary btn-full" id="btn-back-to-login-from-forgot-sent">Giriş Yap</button>
+      </div>
+
       <div id="reset-password-panel" class="hidden">
-        <p class="auth-intro">Yeni şifreni belirle.</p>
+        <p class="auth-intro">Yeni şifreni belirle. En az 6 karakter olmalı.</p>
         <form id="reset-password-form">
           <div class="form-group">
             <label for="reset-password-new">Yeni şifre</label>
-            <input type="password" id="reset-password-new" required minlength="6" placeholder="En az 6 karakter">
+            <input type="password" id="reset-password-new" required minlength="6" autocomplete="new-password" placeholder="En az 6 karakter">
           </div>
           <div class="form-group">
             <label for="reset-password-confirm">Yeni şifre (tekrar)</label>
-            <input type="password" id="reset-password-confirm" required minlength="6">
+            <input type="password" id="reset-password-confirm" required minlength="6" autocomplete="new-password">
           </div>
           <p class="form-error" id="reset-password-error"></p>
-          <button type="submit" class="btn btn-primary btn-full">Şifreyi Güncelle</button>
+          <button type="submit" class="btn btn-primary btn-full" id="btn-reset-submit">Şifreyi Güncelle</button>
         </form>
       </div>
 
@@ -406,8 +415,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js?v=1"></script>
-  <script src="js/supabase-client.js?v=1"></script>
-  <script src="js/auth.js?v=3"></script>
+  <script src="js/supabase-client.js?v=2"></script>
+  <script src="js/auth.js?v=4"></script>
   <script src="js/app.js?v=11"></script>
 </body>
 </html>
