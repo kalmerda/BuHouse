@@ -19,6 +19,9 @@ function getSupabase() {
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
+      // E-posta linkleri (şifre sıfırlama / doğrulama) farklı tarayıcı veya
+      // cihazda açılabilsin diye implicit flow. PKCE aynı tarayıcıyı zorunlu kılar.
+      flowType: 'implicit',
     },
   });
 
