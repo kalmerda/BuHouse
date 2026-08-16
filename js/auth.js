@@ -137,9 +137,13 @@ function openAuthModal(mode = 'register') {
 }
 
 function closeAuthModal() {
+  const abandonedRecovery = isRecoveringPassword;
   isRecoveringPassword = false;
   document.getElementById('auth-modal')?.close();
   resetAuthForms();
+  if (abandonedRecovery) {
+    showToast('Şifren henüz güncellenmedi. İstersen Şifremi unuttum ile yeni link isteyebilirsin.');
+  }
 }
 
 function switchAuthTab(mode) {
@@ -393,6 +397,10 @@ function bindAuthEvents() {
 
   document.getElementById('auth-modal')?.addEventListener('click', (e) => {
     if (e.target === e.currentTarget && !isRecoveringPassword) closeAuthModal();
+  });
+
+  document.getElementById('auth-modal')?.addEventListener('cancel', (e) => {
+    if (isRecoveringPassword) e.preventDefault();
   });
 }
 
