@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=8">
+  <link rel="stylesheet" href="css/style.css?v=9">
 </head>
 <body>
   <header class="header">
@@ -235,6 +235,11 @@
           <label for="form-class-year">Kaçıncı sınıf <span class="optional">(opsiyonel)</span></label>
           <input type="text" id="form-class-year" placeholder="Örn. 2. sınıf, mezun">
         </div>
+        <div class="form-group full-width" id="gender-preference-group">
+          <label for="form-gender-preference">Aranan cinsiyet</label>
+          <input type="text" id="form-gender-preference" maxlength="80" placeholder="Örn. kadın öğrenci, erkek, farketmez">
+          <small class="field-hint">Kendi ifadenle yaz. Hazır seçenek yok; ilan yayınlanınca herkese görünür.</small>
+        </div>
         <div class="form-group full-width hidden" id="photos-section">
           <label for="form-photos" id="form-photos-label">Oda fotoğrafları *</label>
           <input type="file" id="form-photos" accept="image/jpeg,image/png,image/webp" multiple>
@@ -256,7 +261,7 @@
         </div>
         <div class="form-group full-width">
           <label for="form-description">Açıklama *</label>
-          <textarea id="form-description" required rows="4" placeholder="Yaşam tarzın, ev kuralların ve beklentilerin hakkında bilgi ver. Cinsiyet tercihlerini de bu alanda belirtebilirsin."></textarea>
+          <textarea id="form-description" required rows="4" placeholder="Yaşam tarzın, ev kuralların ve beklentilerin hakkında bilgi ver."></textarea>
         </div>
         <div class="form-group full-width">
           <label for="form-whatsapp">Telefon numarası *</label>
@@ -417,7 +422,7 @@
   <script src="js/config.js?v=1"></script>
   <script src="js/supabase-client.js?v=2"></script>
   <script src="js/auth.js?v=4"></script>
-  <script src="js/app.js?v=11"></script>
+  <script src="js/app.js?v=12"></script>
   <script>
     window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
   </script>

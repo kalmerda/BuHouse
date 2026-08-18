@@ -28,6 +28,7 @@ function rowToListing(row) {
     budget: Number(row.budget),
     title: row.title,
     description: row.description,
+    genderPreference: row.gender_preference || row.gender || '',
     whatsapp: row.whatsapp,
     photos: row.photos || [],
     moveIn: row.move_in || '',
@@ -49,6 +50,7 @@ function listingToRow(listing, userId) {
     budget: listing.budget,
     title: listing.title,
     description: listing.description,
+    gender_preference: listing.genderPreference || null,
     whatsapp: listing.whatsapp,
     photos: listing.photos,
     move_in: listing.moveIn || null,
@@ -217,6 +219,7 @@ function filterListings(listings) {
         item.district,
         item.university,
         item.classYear,
+        item.genderPreference,
       ].join(' ').toLowerCase();
       if (!haystack.includes(q)) return false;
     }
@@ -314,6 +317,9 @@ function renderListings() {
             <span>📍 ${escapeHtml(formatLocation(item))}</span>
             <span>🎓 ${escapeHtml(item.university)}</span>
           </div>
+          ${item.type !== 'items' && item.genderPreference
+            ? `<div class="card-gender">Aranan cinsiyet: ${escapeHtml(item.genderPreference)}</div>`
+            : ''}
           ${tags.length ? `<div class="card-tags">${tags.map((t) => `<span class="tag">${t}</span>`).join('')}</div>` : ''}
           <div class="card-budget">${formatListingPrice(item)}</div>
           <div class="card-footer">
@@ -471,6 +477,9 @@ function openDetail(id) {
       </div>
     </div>
     <div class="detail-row"><span>İlan sahibi</span><span>${escapeHtml(formatPublicProfile(item.name, isItems ? '' : item.classYear))}</span></div>
+    ${!isItems && item.genderPreference
+      ? `<div class="detail-row"><span>Aranan cinsiyet</span><span>${escapeHtml(item.genderPreference)}</span></div>`
+      : ''}
     <div class="detail-row"><span>${isItems ? 'Fiyat' : 'Bütçe'}</span><span>${formatListingPrice(item)}</span></div>
     ${!isItems ? `<div class="detail-row"><span>Taşınma</span><span>${formatDate(item.moveIn)}</span></div>` : ''}
     ${tags.length && !isItems ? `<div class="card-tags" style="margin-top:1rem">${tags.map((t) => `<span class="tag">${t}</span>`).join('')}</div>` : ''}
@@ -537,6 +546,7 @@ function toggleFormForListingType() {
 
   document.getElementById('move-in-group')?.classList.toggle('hidden', isItems);
   document.getElementById('class-year-group')?.classList.toggle('hidden', isItems);
+  document.getElementById('gender-preference-group')?.classList.toggle('hidden', isItems);
   document.getElementById('room-preferences')?.classList.toggle('hidden', isItems);
 
   const budgetLabel = document.getElementById('form-budget-label');
@@ -563,7 +573,7 @@ function toggleFormForListingType() {
   if (descriptionInput) {
     descriptionInput.placeholder = isItems
       ? 'Eşyanın durumu, boyutu, teslim yeri ve zamanı...'
-      : 'Yaşam tarzın, ev kuralların ve beklentilerin hakkında bilgi ver. Cinsiyet tercihlerini de bu alanda belirtebilirsin.';
+      : 'Yaşam tarzın, ev kuralların ve beklentilerin hakkında bilgi ver.';
   }
 }
 
@@ -634,6 +644,7 @@ function fillListingForm(listing) {
   document.getElementById('form-district').value = listing.district || '';
   document.getElementById('form-budget').value = listing.budget ?? '';
   document.getElementById('form-title').value = listing.title || '';
+  document.getElementById('form-gender-preference').value = listing.type === 'items' ? '' : (listing.genderPreference || '');
   document.getElementById('form-description').value = listing.description || '';
   document.getElementById('form-whatsapp').value = listing.whatsapp || '';
   document.getElementById('form-move-in').value = listing.moveIn || '';
@@ -811,6 +822,7 @@ async function handleListingSubmit(e) {
     budget: Number(document.getElementById('form-budget').value),
     title: document.getElementById('form-title').value.trim(),
     description: document.getElementById('form-description').value.trim(),
+    genderPreference: type === 'items' ? '' : document.getElementById('form-gender-preference').value.trim(),
     whatsapp: phoneCheck.stored,
     photos,
     moveIn: type === 'items' ? '' : document.getElementById('form-move-in').value,
