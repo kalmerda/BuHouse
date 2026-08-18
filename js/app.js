@@ -1031,6 +1031,16 @@ function setupPhoneInput() {
   });
 }
 
+function applyHeroSearch({ scroll = false } = {}) {
+  state.district = document.getElementById('filter-district').value.trim();
+  const budgetValue = document.getElementById('filter-budget').value;
+  state.budget = budgetValue || '20000+';
+  renderListings();
+  if (scroll) {
+    document.querySelector('.listings-section')?.scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
 function init() {
   populateSelects();
 
@@ -1043,11 +1053,11 @@ function init() {
 
   document.getElementById('search-form').addEventListener('submit', (e) => {
     e.preventDefault();
-    state.district = document.getElementById('filter-district').value.trim();
-    const budgetValue = document.getElementById('filter-budget').value;
-    state.budget = budgetValue || '20000+';
-    renderListings();
-    document.querySelector('.listings-section').scrollIntoView({ behavior: 'smooth' });
+    applyHeroSearch({ scroll: true });
+  });
+
+  document.getElementById('filter-district').addEventListener('input', () => {
+    applyHeroSearch({ scroll: false });
   });
 
   document.getElementById('filter-keyword').addEventListener('input', (e) => {

@@ -1418,10 +1418,6 @@ body > * {
 
 /* Responsive */
 @media (max-width: 768px) {
-  .search-bar {
-    grid-template-columns: 1fr;
-  }
-
   .btn-search {
     width: 100%;
     align-self: stretch;
@@ -1473,14 +1469,31 @@ body > * {
   }
 
   .search-bar {
-    grid-template-columns: 1fr 1fr;
-    padding: 0.75rem;
-    margin-bottom: 0.75rem;
-    gap: 0.6rem;
+    display: block;
+    padding: 0;
+    margin-bottom: 0.65rem;
+    background: transparent;
+    border: none;
+    box-shadow: none;
   }
 
+  .search-field-budget,
   .search-field-submit {
-    grid-column: 1 / -1;
+    display: none;
+  }
+
+  .search-field-district label {
+    display: none;
+  }
+
+  .search-field-district input {
+    min-height: 2.4rem;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    box-shadow: var(--shadow);
   }
 
   .hero-stats {
