@@ -1,6 +1,8 @@
 const UNIVERSITY_NAME = 'Boğaziçi Üniversitesi';
 const UNIVERSITY_ID = 'bogazici';
 const DEFAULT_CITY = 'İstanbul';
+const PAGE_TITLE = 'BuHouse — Boğaziçi Üniversitesi Öğrencileri İçin';
+const LISTING_QUERY_KEY = 'ilan';
 
 let allListings = [];
 let editingListingId = null;
@@ -28,6 +30,7 @@ function rowToListing(row) {
     budget: Number(row.budget),
     title: row.title,
     description: row.description,
+    genderPreference: row.gender_preference || row.gender || '',
     whatsapp: row.whatsapp,
     photos: row.photos || [],
     moveIn: row.move_in || '',
@@ -49,6 +52,7 @@ function listingToRow(listing, userId) {
     budget: listing.budget,
     title: listing.title,
     description: listing.description,
+    gender_preference: listing.genderPreference || null,
     whatsapp: listing.whatsapp,
     photos: listing.photos,
     move_in: listing.moveIn || null,
@@ -217,6 +221,7 @@ function filterListings(listings) {
         item.district,
         item.university,
         item.classYear,
+        item.genderPreference,
       ].join(' ').toLowerCase();
       if (!haystack.includes(q)) return false;
     }
@@ -314,6 +319,9 @@ function renderListings() {
             <span>📍 ${escapeHtml(formatLocation(item))}</span>
             <span>🎓 ${escapeHtml(item.university)}</span>
           </div>
+          ${item.type !== 'items' && item.genderPreference
+            ? `<div class="card-gender">Aranan cinsiyet: ${escapeHtml(item.genderPreference)}</div>`
+            : ''}
           ${tags.length ? `<div class="card-tags">${tags.map((t) => `<span class="tag">${t}</span>`).join('')}</div>` : ''}
           <div class="card-budget">${formatListingPrice(item)}</div>
           <div class="card-footer">
@@ -324,9 +332,12 @@ function renderListings() {
                 <div class="card-date">${formatRelativeDate(item.createdAt)}</div>
               </div>
             </div>
-            ${isOwnerListing(item) && state.view === 'mine'
-              ? `<button type="button" class="btn btn-ghost btn-sm card-edit-btn" data-id="${item.id}">Düzenle</button>`
-              : ''}
+            <div class="card-actions">
+              <button type="button" class="btn btn-ghost btn-sm card-share-btn" data-id="${item.id}">Paylaş</button>
+              ${isOwnerListing(item) && state.view === 'mine'
+                ? `<button type="button" class="btn btn-ghost btn-sm card-edit-btn" data-id="${item.id}">Düzenle</button>`
+                : ''}
+            </div>
           </div>
         </article>
       `;
@@ -335,6 +346,14 @@ function renderListings() {
 
   grid.querySelectorAll('.listing-card').forEach((card) => {
     card.addEventListener('click', () => openDetail(card.dataset.id));
+  });
+
+  grid.querySelectorAll('.card-share-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const item = getListings().find((l) => l.id === btn.dataset.id);
+      if (item) shareListing(item);
+    });
   });
 
   grid.querySelectorAll('.card-edit-btn').forEach((btn) => {
@@ -413,6 +432,121 @@ function getWhatsAppNumber(item) {
   return null;
 }
 
+function getListingIdFromLocation() {
+  return new URLSearchParams(window.location.search).get(LISTING_QUERY_KEY) || '';
+}
+
+function getListingShareUrl(id) {
+  const url = new URL(window.location.origin + window.location.pathname);
+  url.searchParams.set(LISTING_QUERY_KEY, id);
+  return url.toString();
+}
+
+function setListingInUrl(id, { replace = false } = {}) {
+  const url = new URL(window.location.href);
+  if (id) url.searchParams.set(LISTING_QUERY_KEY, id);
+  else url.searchParams.delete(LISTING_QUERY_KEY);
+
+  const next = `${url.pathname}${url.search}${url.hash}`;
+  const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  if (next === current) return;
+
+  history[replace ? 'replaceState' : 'pushState']({ ilan: id || null }, '', next);
+}
+
+function buildListingShareText(item) {
+  const lines = [
+    `BuHouse ilanı: ${item.title}`,
+    `${getTypeLabel(item.type)} · ${formatLocation(item)} · ${formatListingPrice(item)}`,
+  ];
+  if (item.type !== 'items' && item.genderPreference) {
+    lines.push(`Aranan cinsiyet: ${item.genderPreference}`);
+  }
+  lines.push('', getListingShareUrl(item.id));
+  return lines.join('\n');
+}
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    const input = document.createElement('textarea');
+    input.value = text;
+    input.setAttribute('readonly', '');
+    input.style.position = 'fixed';
+    input.style.left = '-9999px';
+    document.body.appendChild(input);
+    input.select();
+    const ok = document.execCommand('copy');
+    input.remove();
+    return ok;
+  }
+}
+
+async function shareListing(item) {
+  const url = getListingShareUrl(item.id);
+  const text = buildListingShareText(item);
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: `${item.title} — BuHouse`,
+        text,
+        url,
+      });
+      return;
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+    }
+  }
+
+  const copied = await copyText(url);
+  showToast(copied ? 'İlan linki kopyalandı. Hikâyene veya sohbete yapıştır.' : 'Link kopyalanamadı.');
+}
+
+function renderShareSection(item) {
+  const whatsappHref = `https://wa.me/?text=${encodeURIComponent(buildListingShareText(item))}`;
+  return `
+    <div class="detail-share">
+      <div class="detail-share-copy">
+        <strong>İlanı paylaş</strong>
+        <p>Linki WhatsApp, Instagram veya arkadaşlarına gönder. Açan kişi doğrudan bu ilanı görür.</p>
+      </div>
+      <div class="detail-share-actions">
+        <button type="button" class="btn btn-primary" id="detail-share-btn">Paylaş</button>
+        <button type="button" class="btn btn-ghost" id="detail-copy-link-btn">Linki kopyala</button>
+        <a class="btn btn-ghost" id="detail-whatsapp-share" href="${whatsappHref}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+      </div>
+    </div>`;
+}
+
+function bindDetailShareButtons(item) {
+  document.getElementById('detail-share-btn')?.addEventListener('click', () => shareListing(item));
+  document.getElementById('detail-copy-link-btn')?.addEventListener('click', async () => {
+    const copied = await copyText(getListingShareUrl(item.id));
+    showToast(copied ? 'İlan linki kopyalandı.' : 'Link kopyalanamadı.');
+  });
+}
+
+function restorePageTitle() {
+  document.title = PAGE_TITLE;
+}
+
+function openSharedListingIfNeeded() {
+  const id = getListingIdFromLocation();
+  if (!id) return;
+
+  const item = getListings().find((listing) => listing.id === id);
+  if (!item) {
+    showToast('Bu ilan bulunamadı veya kaldırılmış.');
+    setListingInUrl(null, { replace: true });
+    return;
+  }
+
+  openDetail(id, { fromUrl: true });
+}
+
 function buildWhatsAppLink(phone, item) {
   const message = item.type === 'items'
     ? `Merhaba, BuHouse'taki "${item.title}" eşya ilanınız hakkında yazıyorum.`
@@ -452,7 +586,7 @@ function renderContactSection(item) {
     </div>`;
 }
 
-function openDetail(id) {
+function openDetail(id, { fromUrl = false } = {}) {
   const listings = getListings();
   const item = listings.find((l) => l.id === id);
   if (!item) return;
@@ -471,11 +605,15 @@ function openDetail(id) {
       </div>
     </div>
     <div class="detail-row"><span>İlan sahibi</span><span>${escapeHtml(formatPublicProfile(item.name, isItems ? '' : item.classYear))}</span></div>
+    ${!isItems && item.genderPreference
+      ? `<div class="detail-row"><span>Aranan cinsiyet</span><span>${escapeHtml(item.genderPreference)}</span></div>`
+      : ''}
     <div class="detail-row"><span>${isItems ? 'Fiyat' : 'Bütçe'}</span><span>${formatListingPrice(item)}</span></div>
     ${!isItems ? `<div class="detail-row"><span>Taşınma</span><span>${formatDate(item.moveIn)}</span></div>` : ''}
     ${tags.length && !isItems ? `<div class="card-tags" style="margin-top:1rem">${tags.map((t) => `<span class="tag">${t}</span>`).join('')}</div>` : ''}
     ${renderPhotoGallery(item.photos)}
     <p class="detail-description">${escapeHtml(item.description)}</p>
+    ${renderShareSection(item)}
     ${owner ? `
       <div class="detail-owner-actions">
         <button type="button" class="btn btn-primary" id="detail-edit-btn">Düzenle</button>
@@ -484,7 +622,11 @@ function openDetail(id) {
     ` : renderContactSection(item)}
   `;
 
-  document.getElementById('detail-modal').showModal();
+  document.title = `${item.title} — BuHouse`;
+  setListingInUrl(id, { replace: fromUrl });
+  const modal = document.getElementById('detail-modal');
+  if (!modal.open) modal.showModal();
+  bindDetailShareButtons(item);
 
   if (owner) {
     document.getElementById('detail-edit-btn')?.addEventListener('click', () => {
@@ -537,6 +679,7 @@ function toggleFormForListingType() {
 
   document.getElementById('move-in-group')?.classList.toggle('hidden', isItems);
   document.getElementById('class-year-group')?.classList.toggle('hidden', isItems);
+  document.getElementById('gender-preference-group')?.classList.toggle('hidden', isItems);
   document.getElementById('room-preferences')?.classList.toggle('hidden', isItems);
 
   const budgetLabel = document.getElementById('form-budget-label');
@@ -563,7 +706,7 @@ function toggleFormForListingType() {
   if (descriptionInput) {
     descriptionInput.placeholder = isItems
       ? 'Eşyanın durumu, boyutu, teslim yeri ve zamanı...'
-      : 'Yaşam tarzın, ev kuralların ve beklentilerin hakkında bilgi ver. Cinsiyet tercihlerini de bu alanda belirtebilirsin.';
+      : 'Yaşam tarzın, ev kuralların ve beklentilerin hakkında bilgi ver.';
   }
 }
 
@@ -634,6 +777,7 @@ function fillListingForm(listing) {
   document.getElementById('form-district').value = listing.district || '';
   document.getElementById('form-budget').value = listing.budget ?? '';
   document.getElementById('form-title').value = listing.title || '';
+  document.getElementById('form-gender-preference').value = listing.type === 'items' ? '' : (listing.genderPreference || '');
   document.getElementById('form-description').value = listing.description || '';
   document.getElementById('form-whatsapp').value = listing.whatsapp || '';
   document.getElementById('form-move-in').value = listing.moveIn || '';
@@ -811,6 +955,7 @@ async function handleListingSubmit(e) {
     budget: Number(document.getElementById('form-budget').value),
     title: document.getElementById('form-title').value.trim(),
     description: document.getElementById('form-description').value.trim(),
+    genderPreference: type === 'items' ? '' : document.getElementById('form-gender-preference').value.trim(),
     whatsapp: phoneCheck.stored,
     photos,
     moveIn: type === 'items' ? '' : document.getElementById('form-move-in').value,
@@ -836,7 +981,8 @@ async function handleListingSubmit(e) {
       allListings.unshift(saved);
 
       closeListingModal();
-      showToast('İlanınız başarıyla yayınlandı!');
+      showToast('İlanınız başarıyla yayınlandı. Linki paylaşabilirsin.');
+      openDetail(saved.id);
     }
 
     renderListings();
@@ -940,6 +1086,23 @@ function init() {
     document.getElementById('detail-modal').close();
   });
 
+  document.getElementById('detail-modal').addEventListener('close', () => {
+    restorePageTitle();
+    if (getListingIdFromLocation()) {
+      setListingInUrl(null, { replace: true });
+    }
+  });
+
+  window.addEventListener('popstate', () => {
+    const id = getListingIdFromLocation();
+    const modal = document.getElementById('detail-modal');
+    if (id) {
+      openDetail(id, { fromUrl: true });
+      return;
+    }
+    if (modal?.open) modal.close();
+  });
+
   document.getElementById('btn-how-it-works').addEventListener('click', () => {
     document.getElementById('how-it-works').scrollIntoView({ behavior: 'smooth' });
   });
@@ -957,6 +1120,7 @@ async function refreshListings() {
   try {
     allListings = await fetchListings();
     renderListings();
+    openSharedListingIfNeeded();
   } catch (err) {
     console.error(err);
     showToast('İlanlar yüklenemedi.');

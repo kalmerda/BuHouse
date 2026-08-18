@@ -73,6 +73,7 @@ create table if not exists public.listings (
   budget numeric not null default 0,
   title text not null,
   description text not null,
+  gender_preference text,
   whatsapp text not null,
   photos text[] not null default '{}',
   move_in date,

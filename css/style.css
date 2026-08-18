@@ -508,6 +508,7 @@ body > * {
 .listing-card .card-badge,
 .listing-card .card-title,
 .listing-card .card-meta,
+.listing-card .card-gender,
 .listing-card .card-tags,
 .listing-card .card-budget,
 .listing-card .card-footer {
@@ -525,6 +526,7 @@ body > * {
 
 .listing-card .card-title,
 .listing-card .card-meta,
+.listing-card .card-gender,
 .listing-card .card-tags,
 .listing-card .card-budget {
   margin-top: 0.75rem;
@@ -618,6 +620,50 @@ body > * {
   background: #fef3f2;
 }
 
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.detail-share {
+  margin-top: 1.25rem;
+  padding: 1.15rem 1.2rem;
+  border-radius: calc(var(--radius-lg) - 2px);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.detail-share-copy {
+  margin-bottom: 0.9rem;
+}
+
+.detail-share-copy strong {
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+.detail-share-copy p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.detail-share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.detail-share-actions .btn,
+.detail-share-actions a.btn {
+  flex: 1;
+  min-width: 7.5rem;
+  text-align: center;
+  text-decoration: none;
+}
+
 .detail-owner-actions {
   display: flex;
   gap: 0.75rem;
@@ -685,6 +731,20 @@ body > * {
   font-weight: 700;
   color: var(--primary);
   margin-top: auto;
+}
+
+.card-gender {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.7rem;
+  background: var(--accent-light);
+  color: var(--primary-hover);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 .card-tags {
