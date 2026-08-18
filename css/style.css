@@ -1444,27 +1444,59 @@ body > * {
   }
 
   .hero {
-    padding: 2rem 0 0;
+    padding: 0.85rem 0 0;
   }
 
   .hero-grid {
     grid-template-columns: 1fr;
-    gap: 2rem;
-    padding-bottom: 1.5rem;
+    gap: 0;
+    padding-bottom: 0.5rem;
   }
 
-  .hero-scenery {
-    justify-self: center;
-    max-width: 360px;
-    order: -1;
+  .hero-scenery,
+  .hero-panorama,
+  .hero-community,
+  .hero-badge {
+    display: none;
   }
 
-  .hero-panorama img {
-    max-height: 160px;
+  .hero-title {
+    font-size: 1.7rem;
+    line-height: 1.15;
+    margin-bottom: 0.35rem;
+    max-width: none;
+  }
+
+  .hero-subtitle {
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .search-bar {
+    grid-template-columns: 1fr 1fr;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    gap: 0.6rem;
+  }
+
+  .search-field-submit {
+    grid-column: 1 / -1;
   }
 
   .hero-stats {
-    gap: 1.5rem;
+    gap: 1rem;
+  }
+
+  .stat strong {
+    font-size: 1.25rem;
+  }
+
+  .stat span {
+    font-size: 0.75rem;
+  }
+
+  .filters-section {
+    padding: 0.65rem 0 0.85rem;
   }
 
   .how-it-works-bg {
