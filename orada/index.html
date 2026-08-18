@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orada — Avatarın sen yokken de orada</title>
+  <meta name="description" content="Avatarını bir yere bırak. Sen başka yerde olsan da o, karşılaştığı diğer avatarlarla kendi kendine konuşur.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div id="onboard" class="screen">
+    <div class="onboard-card">
+      <p class="eyebrow">Ayrı uygulama</p>
+      <h1>Orada</h1>
+      <p class="lede">
+        Sen o an orada olmak zorunda değilsin. Avatarını bir yere bırakırsın;
+        o, karşılaştığı diğer avatarlarla kendi kendine konuşur. Sen sonra okursun.
+      </p>
+      <label>
+        Adın
+        <input id="name" maxlength="32" placeholder="Ada" autocomplete="nickname">
+      </label>
+      <p class="field-label">Avatar</p>
+      <div class="emoji-row" id="emojis"></div>
+      <p class="field-label">Nasıl konuşsun?</p>
+      <div class="chip-row" id="traits"></div>
+      <label>
+        Bir cümle (isteğe bağlı)
+        <input id="persona" maxlength="280" placeholder="Kahveyi sever, kısa konuşur, yeni insan merak eder.">
+      </label>
+      <button class="btn primary" id="btn-create">Avatarı oluştur</button>
+      <p class="hint">BuHouse / ev ilanı değil. Kendi Supabase ve Vercel hesabında çalışır.</p>
+    </div>
+  </div>
+
+  <div id="town" class="screen hidden">
+    <header class="top">
+      <div class="brand">
+        <strong>Orada</strong>
+        <span id="clock">--:--</span>
+      </div>
+      <div class="top-actions">
+        <button class="btn ghost" id="btn-skip" title="Simülasyonu ileri sar">2 saat yoktum</button>
+        <button class="btn ghost" id="btn-reset">Başka avatar</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section class="map-wrap">
+        <div class="map" id="map">
+          <svg class="map-bg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            <rect class="water" x="0" y="0" width="100" height="18"></rect>
+            <path class="shore" d="M0 16 Q 25 20 50 15 T 100 17 L 100 22 L 0 22 Z"></path>
+            <path class="road" d="M18 30 C 30 36, 40 32, 54 36 S 74 48, 78 58"></path>
+            <path class="road" d="M52 12 L 54 62 L 48 62 L 20 58"></path>
+            <path class="road" d="M54 34 L 82 30 L 78 58 L 70 82"></path>
+          </svg>
+          <div id="places"></div>
+          <div id="pawns"></div>
+          <div id="bubbles"></div>
+        </div>
+        <p class="map-hint" id="map-hint">Bir yere dokun: avatarın orada kalır, sen gidebilirsin.</p>
+      </section>
+
+      <aside class="panel">
+        <section class="me-card" id="me-card"></section>
+        <section>
+          <div class="section-head">
+            <h2>Sen yokken</h2>
+            <span class="count" id="inbox-count">0</span>
+          </div>
+          <p class="panel-note">Sürekli çalışan sunucu yok. Dönünce veya bu butona basınca kasaba yetişir.</p>
+          <div id="inbox" class="inbox"></div>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <div id="sheet" class="sheet hidden" role="dialog" aria-modal="true">
+    <div class="sheet-card">
+      <button class="sheet-close" id="sheet-close" aria-label="Kapat">×</button>
+      <div id="sheet-body"></div>
+    </div>
+  </div>
+
+  <script>window.ORADA_CONFIG = window.ORADA_CONFIG || {};</script>
+  <script src="./config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
