@@ -3,6 +3,7 @@ const UNIVERSITY_ID = 'bogazici';
 const DEFAULT_CITY = 'İstanbul';
 const PAGE_TITLE = 'BuHouse — Boğaziçi Üniversitesi Öğrencileri İçin';
 const LISTING_QUERY_KEY = 'ilan';
+const GENDER_PREF_PREFIX = 'aranan-cinsiyet:';
 
 let allListings = [];
 let editingListingId = null;
@@ -30,7 +31,7 @@ function rowToListing(row) {
     budget: Number(row.budget),
     title: row.title,
     description: row.description,
-    genderPreference: row.gender_preference || row.gender || '',
+    genderPreference: genderFromRow(row),
     whatsapp: row.whatsapp,
     photos: row.photos || [],
     moveIn: row.move_in || '',
@@ -39,8 +40,26 @@ function rowToListing(row) {
   };
 }
 
-function listingToRow(listing, userId) {
-  return {
+function genderFromRow(row) {
+  if (row.gender_preference) return String(row.gender_preference).trim();
+  const encoded = (row.preferences || []).find((pref) => String(pref).startsWith(GENDER_PREF_PREFIX));
+  if (encoded) return encoded.slice(GENDER_PREF_PREFIX.length).trim();
+  if (row.gender === 'female') return 'Kadın öğrenci';
+  if (row.gender === 'male') return 'Erkek öğrenci';
+  return row.gender ? String(row.gender).trim() : '';
+}
+
+function prefsWithoutEncodedGender(prefs) {
+  return (prefs || []).filter((pref) => !String(pref).startsWith(GENDER_PREF_PREFIX));
+}
+
+function listingToRow(listing, userId, { useGenderColumn = true } = {}) {
+  const preferences = prefsWithoutEncodedGender(listing.preferences);
+  if (!useGenderColumn && listing.genderPreference) {
+    preferences.push(`${GENDER_PREF_PREFIX}${listing.genderPreference}`);
+  }
+
+  const row = {
     user_id: userId,
     name: listing.name,
     class_year: listing.classYear || null,
@@ -52,12 +71,24 @@ function listingToRow(listing, userId) {
     budget: listing.budget,
     title: listing.title,
     description: listing.description,
-    gender_preference: listing.genderPreference || null,
     whatsapp: listing.whatsapp,
     photos: listing.photos,
     move_in: listing.moveIn || null,
-    preferences: listing.preferences,
+    preferences,
   };
+
+  if (useGenderColumn) {
+    row.gender_preference = listing.genderPreference || null;
+  }
+
+  return row;
+}
+
+function isMissingGenderColumn(error) {
+  const text = [error?.message, error?.details, error?.hint, error?.code]
+    .filter(Boolean)
+    .join(' ');
+  return /gender_preference/i.test(text) || error?.code === 'PGRST204';
 }
 
 async function fetchListings() {
@@ -74,11 +105,19 @@ async function fetchListings() {
 
 async function createListing(listing, userId) {
   const supabase = window.getSupabase();
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('listings')
     .insert(listingToRow(listing, userId))
     .select('*')
     .single();
+
+  if (error && isMissingGenderColumn(error)) {
+    ({ data, error } = await supabase
+      .from('listings')
+      .insert(listingToRow(listing, userId, { useGenderColumn: false }))
+      .select('*')
+      .single());
+  }
 
   if (error) throw error;
   return rowToListing(data);
@@ -86,13 +125,23 @@ async function createListing(listing, userId) {
 
 async function updateListing(id, listing, userId) {
   const supabase = window.getSupabase();
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('listings')
     .update(listingToRow(listing, userId))
     .eq('id', id)
     .eq('user_id', userId)
     .select('*')
     .single();
+
+  if (error && isMissingGenderColumn(error)) {
+    ({ data, error } = await supabase
+      .from('listings')
+      .update(listingToRow(listing, userId, { useGenderColumn: false }))
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select('*')
+      .single());
+  }
 
   if (error) throw error;
   return rowToListing(data);
@@ -320,7 +369,10 @@ function renderListings() {
             <span>🎓 ${escapeHtml(item.university)}</span>
           </div>
           ${item.type !== 'items' && item.genderPreference
-            ? `<div class="card-gender">Aranan cinsiyet: ${escapeHtml(item.genderPreference)}</div>`
+            ? `<div class="card-gender">
+                <span class="card-gender-label">Aranan cinsiyet</span>
+                <span class="card-gender-value">${escapeHtml(item.genderPreference)}</span>
+              </div>`
             : ''}
           ${tags.length ? `<div class="card-tags">${tags.map((t) => `<span class="tag">${t}</span>`).join('')}</div>` : ''}
           <div class="card-budget">${formatListingPrice(item)}</div>
@@ -680,6 +732,8 @@ function toggleFormForListingType() {
   document.getElementById('move-in-group')?.classList.toggle('hidden', isItems);
   document.getElementById('class-year-group')?.classList.toggle('hidden', isItems);
   document.getElementById('gender-preference-group')?.classList.toggle('hidden', isItems);
+  const genderInput = document.getElementById('form-gender-preference');
+  if (genderInput) genderInput.required = !isItems;
   document.getElementById('room-preferences')?.classList.toggle('hidden', isItems);
 
   const budgetLabel = document.getElementById('form-budget-label');
@@ -908,6 +962,15 @@ async function handleListingSubmit(e) {
     return;
   }
 
+  const genderPreference = type === 'items'
+    ? ''
+    : document.getElementById('form-gender-preference').value.trim();
+  if (type !== 'items' && !genderPreference) {
+    showToast('Aranan cinsiyeti yaz. Hazır seçenek yok; kendi ifadenle belirt.');
+    document.getElementById('form-gender-preference').focus();
+    return;
+  }
+
   let photos = [];
 
   if (type === 'offering' || type === 'items') {
@@ -955,7 +1018,7 @@ async function handleListingSubmit(e) {
     budget: Number(document.getElementById('form-budget').value),
     title: document.getElementById('form-title').value.trim(),
     description: document.getElementById('form-description').value.trim(),
-    genderPreference: type === 'items' ? '' : document.getElementById('form-gender-preference').value.trim(),
+    genderPreference,
     whatsapp: phoneCheck.stored,
     photos,
     moveIn: type === 'items' ? '' : document.getElementById('form-move-in').value,
