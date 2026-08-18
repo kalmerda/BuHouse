@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=12">
+  <link rel="stylesheet" href="css/style.css?v=13">
 </head>
 <body>
   <header class="header">
@@ -140,6 +140,7 @@
           <button class="chip" data-type="items">Eşya ilanı</button>
         </div>
         <input type="search" class="search-input" id="filter-keyword" placeholder="Başlık, semt, açıklama ara...">
+        <input type="search" class="search-input search-input-gender" id="filter-gender" placeholder="Aranan cinsiyet" maxlength="80">
       </div>
     </section>
 
@@ -422,7 +423,7 @@
   <script src="js/config.js?v=1"></script>
   <script src="js/supabase-client.js?v=2"></script>
   <script src="js/auth.js?v=4"></script>
-  <script src="js/app.js?v=14"></script>
+  <script src="js/app.js?v=15"></script>
   <script>
     window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
   </script>

@@ -461,6 +461,39 @@ body > * {
   max-width: 280px;
 }
 
+.search-input-gender {
+  max-width: 180px;
+  min-width: 140px;
+}
+
+.card-gender {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--accent-light);
+  color: var(--primary-hover);
+  border-radius: var(--radius);
+  border: 1px solid rgba(45, 106, 79, 0.12);
+  line-height: 1.35;
+}
+
+.card-gender-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.card-gender-value {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--primary-hover);
+}
+
 /* Listings */
 .listings-section {
   padding-bottom: 4rem;
@@ -731,20 +764,6 @@ body > * {
   font-weight: 700;
   color: var(--primary);
   margin-top: auto;
-}
-
-.card-gender {
-  display: inline-flex;
-  align-self: flex-start;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.28rem 0.7rem;
-  background: var(--accent-light);
-  color: var(--primary-hover);
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  line-height: 1.35;
 }
 
 .card-tags {

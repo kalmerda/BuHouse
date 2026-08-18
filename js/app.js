@@ -13,7 +13,8 @@ const state = {
   type: '',
   district: '',
   budget: '20000+',
-  keyword: ''
+  keyword: '',
+  gender: ''
 };
 
 function rowToListing(row) {
@@ -213,6 +214,11 @@ function filterListings(listings) {
       if (!item.district?.toLowerCase().includes(q)) return false;
     }
     if (state.budget && state.budget !== '20000+' && item.budget > Number(state.budget)) return false;
+    if (state.gender) {
+      if (item.type === 'items') return false;
+      const q = state.gender.toLowerCase();
+      if (!(item.genderPreference || '').toLowerCase().includes(q)) return false;
+    }
     if (state.keyword) {
       const q = state.keyword.toLowerCase();
       const haystack = [
@@ -278,7 +284,19 @@ function setListingsView(view) {
   renderListings();
 }
 
+function updateGenderFilterVisibility() {
+  const input = document.getElementById('filter-gender');
+  if (!input) return;
+  const hide = state.type === 'items';
+  input.classList.toggle('hidden', hide);
+  if (hide && state.gender) {
+    input.value = '';
+    state.gender = '';
+  }
+}
+
 function renderListings() {
+  updateGenderFilterVisibility();
   updateListingsViewUI();
   const listings = getListings();
   const filtered = filterListings(listings);
@@ -320,7 +338,10 @@ function renderListings() {
             <span>🎓 ${escapeHtml(item.university)}</span>
           </div>
           ${item.type !== 'items' && item.genderPreference
-            ? `<div class="card-gender">Aranan cinsiyet: ${escapeHtml(item.genderPreference)}</div>`
+            ? `<div class="card-gender">
+                <span class="card-gender-label">Aranan cinsiyet</span>
+                <span class="card-gender-value">${escapeHtml(item.genderPreference)}</span>
+              </div>`
             : ''}
           ${tags.length ? `<div class="card-tags">${tags.map((t) => `<span class="tag">${t}</span>`).join('')}</div>` : ''}
           <div class="card-budget">${formatListingPrice(item)}</div>
@@ -1062,6 +1083,11 @@ function init() {
 
   document.getElementById('filter-keyword').addEventListener('input', (e) => {
     state.keyword = e.target.value.trim();
+    renderListings();
+  });
+
+  document.getElementById('filter-gender').addEventListener('input', (e) => {
+    state.gender = e.target.value.trim();
     renderListings();
   });
 
