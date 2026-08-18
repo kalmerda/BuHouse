@@ -7,4 +7,5 @@ __pycache__/
 *.pyc
 .DS_Store
 orada/data/
+orada/config.js
 orada/**/__pycache__/

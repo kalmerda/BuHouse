@@ -1,49 +1,31 @@
-"""Orada — avatars stay on the map and talk while you are away."""
+"""Orada local server. Production uses a separate Vercel + Supabase project."""
 
 from __future__ import annotations
 
-import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, PlainTextResponse
 from pydantic import BaseModel, Field
 
 import db
 import sim
 
-STATIC = Path(__file__).resolve().parent / "static"
-TICK_SECONDS = 12
+ROOT = Path(__file__).resolve().parent
 
 conn = db.connect()
-lock = asyncio.Lock()
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     db.init_db(conn)
     sim.seed_npcs(conn)
-    task = asyncio.create_task(ticker())
     yield
-    task.cancel()
-    try:
-        await task
-    except asyncio.CancelledError:
-        pass
     conn.close()
 
 
 app = FastAPI(title="Orada", lifespan=lifespan)
-app.mount("/static", StaticFiles(directory=STATIC), name="static")
-
-
-async def ticker():
-    while True:
-        await asyncio.sleep(TICK_SECONDS)
-        async with lock:
-            sim.run_tick(conn)
 
 
 class CreateAvatarIn(BaseModel):
@@ -60,7 +42,7 @@ class DeployIn(BaseModel):
 
 
 class FastForwardIn(BaseModel):
-    ticks: int = Field(default=15, ge=1, le=60)
+    ticks: int = Field(default=8, ge=1, le=8)
 
 
 def require_me(x_avatar_token: str | None) -> dict:
@@ -74,25 +56,42 @@ def require_me(x_avatar_token: str | None) -> dict:
 
 @app.get("/")
 def index():
-    return FileResponse(STATIC / "index.html")
+    return FileResponse(ROOT / "index.html")
+
+
+@app.get("/styles.css")
+def styles():
+    return FileResponse(ROOT / "styles.css")
+
+
+@app.get("/app.js")
+def app_js():
+    return FileResponse(ROOT / "app.js")
+
+
+@app.get("/config.js")
+def config_js():
+    path = ROOT / "config.js"
+    if path.exists():
+        return FileResponse(path)
+    return PlainTextResponse("window.ORADA_CONFIG = {};", media_type="application/javascript")
 
 
 @app.post("/api/avatars")
-async def create_avatar(body: CreateAvatarIn):
+def create_avatar(body: CreateAvatarIn):
     name = body.name.strip()
     if not name:
         raise HTTPException(400, "İsim gerekli")
     traits = ",".join(t.strip() for t in body.traits if t.strip())
     persona = body.persona.strip() or "Karşılaştığı insanlarla kendi sesimle konuşur."
-    async with lock:
-        avatar = sim.create_avatar(
-            conn,
-            name=name,
-            persona=persona,
-            traits=traits,
-            color=body.color,
-            emoji=body.emoji,
-        )
+    avatar = sim.create_avatar(
+        conn,
+        name=name,
+        persona=persona,
+        traits=traits,
+        color=body.color,
+        emoji=body.emoji,
+    )
     return {
         "id": avatar["id"],
         "token": avatar["token"],
@@ -124,6 +123,7 @@ def me(x_avatar_token: str | None = Header(default=None)):
 
 @app.get("/api/world")
 def world(x_avatar_token: str | None = Header(default=None)):
+    sim.catch_up(conn, 0)
     me_id = None
     if x_avatar_token:
         found = sim.avatar_by_token(conn, x_avatar_token)
@@ -133,33 +133,27 @@ def world(x_avatar_token: str | None = Header(default=None)):
 
 
 @app.post("/api/deploy")
-async def deploy_avatar(body: DeployIn, x_avatar_token: str | None = Header(default=None)):
+def deploy_avatar(body: DeployIn, x_avatar_token: str | None = Header(default=None)):
     me = require_me(x_avatar_token)
     try:
-        async with lock:
-            avatar = sim.deploy(conn, me["id"], body.place_id, body.wander)
+        avatar = sim.deploy(conn, me["id"], body.place_id, body.wander)
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
     return {"ok": True, "place_id": avatar["place_id"], "wander": bool(avatar["wander"])}
 
 
 @app.post("/api/recall")
-async def recall_avatar(x_avatar_token: str | None = Header(default=None)):
+def recall_avatar(x_avatar_token: str | None = Header(default=None)):
     me = require_me(x_avatar_token)
-    async with lock:
-        sim.recall(conn, me["id"])
+    sim.recall(conn, me["id"])
     return {"ok": True}
 
 
 @app.post("/api/fast-forward")
-async def fast_forward(body: FastForwardIn, x_avatar_token: str | None = Header(default=None)):
+def fast_forward(body: FastForwardIn, x_avatar_token: str | None = Header(default=None)):
     require_me(x_avatar_token)
-    results = []
-    async with lock:
-        for _ in range(body.ticks):
-            results.append(sim.run_tick(conn))
-    last = results[-1]
-    return {"ok": True, "ticks": len(results), "time": last["time"], "talks": sum(r["talks"] for r in results)}
+    result = sim.catch_up(conn, body.ticks)
+    return {"ok": True, "ticks": body.ticks, "time": result["time"], "talks": result["talks"]}
 
 
 @app.get("/api/inbox")

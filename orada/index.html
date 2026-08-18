@@ -4,16 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Orada — Avatarın sen yokken de orada</title>
-  <meta name="description" content="Avatarını bir yere bırak. Sen başka yerde olsan da o, karşılaştığı avatarlarla kendi kendine konuşur.">
+  <meta name="description" content="Avatarını bir yere bırak. Sen başka yerde olsan da o, karşılaştığı diğer avatarlarla kendi kendine konuşur.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <div id="onboard" class="screen">
     <div class="onboard-card">
-      <p class="eyebrow">Yeni uygulama</p>
+      <p class="eyebrow">Ayrı uygulama</p>
       <h1>Orada</h1>
       <p class="lede">
         Sen o an orada olmak zorunda değilsin. Avatarını bir yere bırakırsın;
@@ -32,7 +32,7 @@
         <input id="persona" maxlength="280" placeholder="Kahveyi sever, kısa konuşur, yeni insan merak eder.">
       </label>
       <button class="btn primary" id="btn-create">Avatarı oluştur</button>
-      <p class="hint">Bu, ev ilanı uygulaması değil. Ayrı bir kasaba simülasyonu.</p>
+      <p class="hint">BuHouse / ev ilanı değil. Kendi Supabase ve Vercel hesabında çalışır.</p>
     </div>
   </div>
 
@@ -43,7 +43,7 @@
         <span id="clock">--:--</span>
       </div>
       <div class="top-actions">
-        <button class="btn ghost" id="btn-skip" title="Simülasyonu 2 saat ileri sar">2 saat yoktum</button>
+        <button class="btn ghost" id="btn-skip" title="Simülasyonu ileri sar">2 saat yoktum</button>
         <button class="btn ghost" id="btn-reset">Başka avatar</button>
       </div>
     </header>
@@ -72,7 +72,7 @@
             <h2>Sen yokken</h2>
             <span class="count" id="inbox-count">0</span>
           </div>
-          <p class="panel-note">Sekmeyi kapatsan da kasaba çalışır. Dönünce konuşmalar burada.</p>
+          <p class="panel-note">Sürekli çalışan sunucu yok. Dönünce veya bu butona basınca kasaba yetişir.</p>
           <div id="inbox" class="inbox"></div>
         </section>
       </aside>
@@ -86,6 +86,9 @@
     </div>
   </div>
 
-  <script src="/static/app.js"></script>
+  <script>window.ORADA_CONFIG = window.ORADA_CONFIG || {};</script>
+  <script src="./config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./app.js"></script>
 </body>
 </html>

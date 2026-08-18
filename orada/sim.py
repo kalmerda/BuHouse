@@ -69,6 +69,43 @@ def _tick_stamp(tick: int) -> str:
 _pair_cooldown: dict[tuple[str, str], int] = {}
 
 
+def catch_up(conn, extra_ticks: int = 0) -> dict:
+    extra = min(8, max(0, int(extra_ticks or 0)))
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(world_clock)")}
+    if "last_catch_up" not in cols:
+        conn.execute("ALTER TABLE world_clock ADD COLUMN last_catch_up TEXT")
+        conn.commit()
+    clock = dict(conn.execute("SELECT * FROM world_clock WHERE id = 1").fetchone())
+    now = datetime.now(timezone.utc)
+    last = clock.get("last_catch_up")
+    elapsed = 0
+    if last:
+        try:
+            prev = datetime.fromisoformat(last)
+            if extra == 0 and (now - prev).total_seconds() < 20:
+                return {
+                    "tick": clock["tick"],
+                    "time": clock_label(clock["minute"]),
+                    "talks": 0,
+                    "skipped": True,
+                }
+            elapsed = min(6, int((now - prev).total_seconds() // 180))
+        except ValueError:
+            elapsed = 0
+    ticks = elapsed + extra
+    talks = 0
+    result = {"tick": clock["tick"], "time": clock_label(clock["minute"]), "talks": 0}
+    for _ in range(ticks):
+        result = run_tick(conn)
+        talks += result["talks"]
+        if talks >= 4:
+            break
+    conn.execute("UPDATE world_clock SET last_catch_up = ? WHERE id = 1", (now.isoformat(),))
+    conn.commit()
+    result["talks"] = talks
+    return result
+
+
 def _cool_key(a: str, b: str) -> tuple[str, str]:
     return (a, b) if a < b else (b, a)
 

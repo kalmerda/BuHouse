@@ -46,6 +46,12 @@ class SimTests(unittest.TestCase):
         self.assertEqual(world["me_id"], me["id"])
         self.assertEqual(len(world["places"]), 8)
 
+    def test_catch_up_is_capped(self):
+        result = sim.catch_up(self.conn, extra_ticks=8)
+        self.assertIn("talks", result)
+        skipped = sim.catch_up(self.conn, extra_ticks=0)
+        self.assertTrue(skipped.get("skipped"))
+
 
 if __name__ == "__main__":
     unittest.main()

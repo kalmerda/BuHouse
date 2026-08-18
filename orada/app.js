@@ -12,6 +12,17 @@ const EMOJIS = ["🙂", "🌙", "☕", "🌿", "🎧", "📚", "🔥", "🌊"];
 const COLORS = ["#e8a87c", "#5ec2c7", "#9b8cff", "#7eb37a", "#e08bb0", "#f0a05a", "#6aa6e8", "#c97b63"];
 const TOKEN_KEY = "orada.token";
 
+const PLACES = [
+  { id: "iskele", name: "İskele", blurb: "Su kenarı. Oturanlar, gelen geçen, akşam ışığı.", x: 52, y: 11 },
+  { id: "park", name: "Çınar Parkı", blurb: "Banklar, köpekler, serin gölge.", x: 20, y: 28 },
+  { id: "carsi", name: "Çarşı", blurb: "Kalabalık, dükkânlar, rastgele karşılaşmalar.", x: 54, y: 34 },
+  { id: "kafe", name: "Ada Kafe", blurb: "Kahve, priz kavgası, yarı açık sohbetler.", x: 82, y: 30 },
+  { id: "kutuphane", name: "Kütüphane", blurb: "Kısık ses, masa paylaşımı, sınav haftası.", x: 18, y: 58 },
+  { id: "durak", name: "Durak", blurb: "Beklemek. Kısa cümleler, ortak kader.", x: 48, y: 62 },
+  { id: "atolye", name: "Atölye", blurb: "Uğraşanlar, müzik, açık kapı.", x: 78, y: 58 },
+  { id: "cati", name: "Çatı", blurb: "Gece. Manzara, uzun konuşmalar.", x: 70, y: 82 },
+];
+
 const state = {
   token: localStorage.getItem(TOKEN_KEY),
   me: null,
@@ -23,17 +34,68 @@ const state = {
   selectedTraits: ["sosyal"],
 };
 
+let supabaseClient = null;
+
 function $(id) {
   return document.getElementById(id);
 }
 
-async function api(path, options = {}) {
+function oradaConfig() {
+  const c = window.ORADA_CONFIG || {};
+  if (c.supabaseUrl && c.supabaseAnonKey && !String(c.supabaseAnonKey).includes("YOUR-")) {
+    return c;
+  }
+  return null;
+}
+
+function sb() {
+  if (!supabaseClient) {
+    const c = oradaConfig();
+    supabaseClient = window.supabase.createClient(c.supabaseUrl, c.supabaseAnonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+  }
+  return supabaseClient;
+}
+
+function rpcError(error) {
+  const msg = error?.message || "Supabase hatası";
+  if (/function|schema cache|does not exist/i.test(msg)) {
+    return "Yeni Supabase projesinde orada/supabase/01_tables.sql ve 02_functions.sql dosyalarını SQL Editor'da çalıştır.";
+  }
+  return msg;
+}
+
+async function rpc(name, args) {
+  const { data, error } = await sb().rpc(name, args);
+  if (error) throw new Error(rpcError(error));
+  return data;
+}
+
+async function localApi(path, options = {}) {
   const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
   if (state.token) headers["X-Avatar-Token"] = state.token;
   const res = await fetch(path, { ...options, headers });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.detail || "İstek başarısız");
   return data;
+}
+
+function applySession(data, token) {
+  state.me = data.me || null;
+  state.world = {
+    time: data.time,
+    tick: data.tick,
+    avatars: data.avatars || [],
+    recent: data.recent || [],
+    me_id: data.me?.id || null,
+    places: PLACES,
+  };
+  state.inbox = data.inbox || [];
+  if (token) state.token = token;
+  renderMap();
+  renderMe();
+  renderInbox();
 }
 
 function renderOnboard() {
@@ -114,7 +176,7 @@ function renderMe() {
         <p>${place ? place.name + " · bırakıldı" : "Henüz bir yere bırakılmadı"}</p>
       </div>
     </div>
-    <p>${me.persona}</p>
+    <p>${me.persona || ""}</p>
     <div class="me-actions">
       ${place ? `<button class="btn ghost" id="btn-recall">Avatarı çek</button>` : ""}
       <button class="btn ghost" id="btn-wander">${me.wander ? "Dolaşmayı kapat" : "Dolaşsın"}</button>
@@ -137,7 +199,7 @@ function renderInbox() {
       <button class="event" data-conv="${ev.id}">
         <div class="meta">${ev.time} · ${ev.place}</div>
         <div class="who">${other}</div>
-        <div>${ev.summary || (ev.messages[0] && ev.messages[0].text) || ""}</div>
+        <div>${ev.summary || (ev.messages && ev.messages[0] && ev.messages[0].text) || ""}</div>
       </button>
     `;
   }).join("");
@@ -152,19 +214,35 @@ function closeSheet() {
   $("sheet").classList.add("hidden");
 }
 
-async function refresh() {
+async function refresh(extraTicks = 0) {
+  if (oradaConfig()) {
+    const data = await rpc("town_session", {
+      p_token: state.token || null,
+      p_extra_ticks: extraTicks,
+    });
+    applySession(data, state.token);
+    return;
+  }
   if (!state.token) return;
+  if (extraTicks) {
+    await localApi("/api/fast-forward", {
+      method: "POST",
+      body: JSON.stringify({ ticks: extraTicks }),
+    });
+  }
   const [me, world, inbox] = await Promise.all([
-    api("/api/me"),
-    api("/api/world"),
-    api("/api/inbox"),
+    localApi("/api/me"),
+    localApi("/api/world"),
+    localApi("/api/inbox"),
   ]);
-  state.me = me;
-  state.world = world;
-  state.inbox = inbox.events;
-  renderMap();
-  renderMe();
-  renderInbox();
+  applySession({
+    time: world.time,
+    tick: world.tick,
+    avatars: world.avatars,
+    recent: world.recent,
+    me,
+    inbox: inbox.events,
+  }, state.token);
 }
 
 async function createAvatar() {
@@ -173,18 +251,33 @@ async function createAvatar() {
     $("name").focus();
     return;
   }
-  const created = await api("/api/avatars", {
+  const traits = state.selectedTraits.join(",");
+  const persona = $("persona").value.trim();
+  if (oradaConfig()) {
+    const data = await rpc("town_create_avatar", {
+      p_name: name,
+      p_persona: persona,
+      p_traits: traits,
+      p_color: state.selectedColor,
+      p_emoji: state.selectedEmoji,
+    });
+    localStorage.setItem(TOKEN_KEY, data.token);
+    showTown(true);
+    applySession(data, data.token);
+    return;
+  }
+  const created = await localApi("/api/avatars", {
     method: "POST",
     body: JSON.stringify({
       name,
-      persona: $("persona").value.trim(),
+      persona,
       traits: state.selectedTraits,
       color: state.selectedColor,
       emoji: state.selectedEmoji,
     }),
   });
-  state.token = created.token;
   localStorage.setItem(TOKEN_KEY, created.token);
+  state.token = created.token;
   showTown(true);
   await refresh();
 }
@@ -192,7 +285,16 @@ async function createAvatar() {
 async function deploy(placeId, wander = true) {
   if (!placeId) return;
   state.selectedPlace = placeId;
-  await api("/api/deploy", {
+  if (oradaConfig()) {
+    const data = await rpc("town_deploy", {
+      p_token: state.token,
+      p_place_id: placeId,
+      p_wander: wander,
+    });
+    applySession(data, state.token);
+    return;
+  }
+  await localApi("/api/deploy", {
     method: "POST",
     body: JSON.stringify({ place_id: placeId, wander }),
   });
@@ -200,28 +302,34 @@ async function deploy(placeId, wander = true) {
 }
 
 async function recall() {
-  await api("/api/recall", { method: "POST" });
+  if (oradaConfig()) {
+    const data = await rpc("town_recall", { p_token: state.token });
+    applySession(data, state.token);
+    return;
+  }
+  await localApi("/api/recall", { method: "POST" });
   await refresh();
 }
 
 async function skipTime() {
   $("btn-skip").disabled = true;
   try {
-    await api("/api/fast-forward", {
-      method: "POST",
-      body: JSON.stringify({ ticks: 15 }),
-    });
-    await refresh();
+    await refresh(8);
   } finally {
     $("btn-skip").disabled = false;
   }
 }
 
 async function openConversation(id) {
-  const conv = await api(`/api/conversations/${id}`);
-  const msgs = conv.messages.map((m) => `
+  let conv;
+  if (oradaConfig()) {
+    conv = await rpc("town_conversation", { p_id: id });
+  } else {
+    conv = await localApi(`/api/conversations/${id}`);
+  }
+  const msgs = (conv.messages || []).map((m) => `
     <div class="msg">
-      <div class="who">${m.emoji} ${m.name}</div>
+      <div class="who">${m.emoji || ""} ${m.name}</div>
       <div>${m.text}</div>
     </div>
   `).join("");
@@ -273,12 +381,25 @@ function bind() {
   $("sheet").addEventListener("click", (e) => {
     if (e.target.id === "sheet") closeSheet();
   });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && state.token) {
+      refresh().catch(() => {});
+    }
+  });
 }
 
 async function boot() {
   bind();
   if (!state.token) {
     showTown(false);
+    if (oradaConfig()) {
+      try {
+        const data = await rpc("town_session", { p_token: null, p_extra_ticks: 0 });
+        applySession(data, null);
+      } catch {
+        /* SQL henüz çalıştırılmamış olabilir */
+      }
+    }
     return;
   }
   try {
@@ -287,9 +408,6 @@ async function boot() {
   } catch {
     resetAvatar();
   }
-  setInterval(() => {
-    if (state.token) refresh().catch(() => {});
-  }, 3000);
 }
 
 boot();
