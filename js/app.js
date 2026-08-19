@@ -955,7 +955,7 @@ async function handleListingSubmit(e) {
     ? ''
     : document.getElementById('form-gender-preference').value.trim();
   if (type !== 'items' && !genderPreference) {
-    showToast('Aranan cinsiyeti yaz. Hazır seçenek yok; kendi ifadenle belirt.');
+    showToast('Aranan cinsiyeti yaz.');
     document.getElementById('form-gender-preference').focus();
     return;
   }
