@@ -242,8 +242,7 @@ function formatLocation(item) {
 function getPreferenceLabels(prefs) {
   const map = {
     'no-smoking': 'Sigara yok',
-    'pets-ok': 'Evcil hayvan OK',
-    'quiet': 'Sessiz ortam'
+    'pets-ok': 'Evcil hayvan OK'
   };
   return prefs.map((p) => map[p]).filter(Boolean);
 }
@@ -826,7 +825,6 @@ function fillListingForm(listing) {
   document.getElementById('form-move-in').value = listing.moveIn || '';
   document.getElementById('form-smoking').checked = listing.preferences?.includes('no-smoking') || false;
   document.getElementById('form-pets').checked = listing.preferences?.includes('pets-ok') || false;
-  document.getElementById('form-quiet').checked = listing.preferences?.includes('quiet') || false;
 }
 
 function resetListingFormState() {
@@ -994,7 +992,6 @@ async function handleListingSubmit(e) {
   const preferences = [];
   if (document.getElementById('form-smoking').checked) preferences.push('no-smoking');
   if (document.getElementById('form-pets').checked) preferences.push('pets-ok');
-  if (document.getElementById('form-quiet').checked) preferences.push('quiet');
 
   const listing = {
     name: document.getElementById('form-name').value.trim(),
